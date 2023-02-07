@@ -90,7 +90,6 @@ func Detect(ctx *config.ProjectContext, includePastResources bool) (schema.Provi
 	case "cloudformation":
 		return cloudformation.NewTemplateProvider(ctx, includePastResources), nil
 	case "azurerm_whatif_json":
-		fmt.Printf("Detected azurerm provider!")
 		return azurerm.NewWhatifJsonProvider(ctx, includePastResources), nil
 	}
 
