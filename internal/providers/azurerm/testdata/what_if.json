@@ -1,6 +1,17 @@
 {
     "changes": [
         {
+            "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg",
+            "changeType": "Create",
+            "after": {
+                "apiVersion": "2019-03-01",
+                "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/rg",
+                "type": "Microsoft.Resources/resourceGroups",
+                "name": "rg",
+                "location": "westeurope"
+            }
+        },
+        {
             "after": {
                 "apiVersion": "2022-03-01",
                 "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group/providers/Microsoft.Web/serverfarms/AppServicePlan-AzureLinuxApp",
