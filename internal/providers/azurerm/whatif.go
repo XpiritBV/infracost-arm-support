@@ -11,7 +11,7 @@ type PropertyChangeType string
 
 const (
 	Create      ChangeType = "Create"
-	Delete                 = "Delete"
+	Delete      ChangeType = "Delete"
 	Deploy                 = "Deploy"
 	Ignore                 = "Ignore"
 	Modify                 = "Modify"
@@ -21,7 +21,7 @@ const (
 
 const (
 	PropCreate   PropertyChangeType = "Create"
-	PropDelete                      = "Delete"
+	PropDelete   PropertyChangeType = "Delete"
 	PropArray                       = "Array"
 	PropModify                      = "Modify"
 	PropNoEffect                    = "NoEffect"

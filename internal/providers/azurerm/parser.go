@@ -148,7 +148,7 @@ func (p *Parser) parseResourceData(data *gjson.Result) (*schema.ResourceData, er
 	armType := data.Get("type")
 	resId := data.Get("id")
 	if !armType.Exists() || !resId.Exists() {
-		return nil, errors.New(fmt.Sprintf("Failed to parse resource data"))
+		return nil, errors.New("Failed to parse resource data")
 	}
 
 	tfType := resources.GetTFResourceFromAzureRMType(armType.Str, data)

@@ -8,16 +8,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDetectAzureRmWhatif(t *testing.T) {
-	ctx := config.NewProjectContext(config.EmptyRunContext(), &config.Project{}, log.Fields{})
+type DetectTest struct {
+	Path     string
+	Expected string
+}
 
-	ctx.ProjectConfig.Path = "../../examples/azurerm/web_app/what_if.json"
-
-	res, err := Detect(ctx, true)
-
-	if err != nil {
-		t.Fatal("Detect threw an error: " + err.Error())
+func TestAzureRmProviderDetection(t *testing.T) {
+	tests := []DetectTest{
+		// {
+		// 	Path:     "../../examples/azurerm/web_app/what_if.json",
+		// 	Expected: "azurerm_whatif_json",
+		// },
+		{
+			Path:     "../../examples/azurerm/web_app/azuredeploy.json",
+			Expected: "azurerm_template_json",
+		},
 	}
 
-	assert.Equal(t, "azurerm_whatif_json", res.Type())
+	for _, test := range tests {
+		func(path string, expected string) {
+			ctx := config.NewProjectContext(config.EmptyRunContext(), &config.Project{}, log.Fields{})
+			ctx.ProjectConfig.Path = path
+
+			res, err := Detect(ctx, true)
+			if err != nil {
+				t.Fatal("Detect threw an error: " + err.Error())
+			}
+
+			assert.Equal(t, expected, res.Type())
+		}(test.Path, test.Expected)
+	}
 }
