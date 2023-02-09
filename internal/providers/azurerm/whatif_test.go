@@ -20,11 +20,38 @@ func TestWhatifSerialization(t *testing.T) {
 	expected := []WhatIf{
 		{
 			Status: "Succeeded",
-			Changes: []ResourceSnapshot{
+			Changes: []*WhatifChange{
 				{
 					ResourceId: "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group2",
 					ChangeType: Create,
-					AfterRaw:   []byte("{\"apiVersion\":\"2019-03-01\",\"id\":\"/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group2\",\"type\":\"Microsoft.Resources/resourceGroups\",\"name\":\"my-resource-group2\",\"location\":\"location3\"}"),
+					BeforeRaw:  []byte("{\"apiVersion\":\"2018-11-30\",\"id\":\"/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myExistingIdentity\",\"type\":\"Microsoft.ManagedIdentity/userAssignedIdentities\",\"name\":\"myExistingIdentity\",\"location\":\"westus2\"}"),
+					AfterRaw:   []byte("{\"apiVersion\":\"2018-11-30\",\"id\":\"/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myExistingIdentity\",\"type\":\"Microsoft.ManagedIdentity/userAssignedIdentities\",\"name\":\"myExistingIdentity\",\"location\":\"westus2\",\"tags\": {\"myNewTag\":\"my tag value\"}}"),
+					Delta: []*WhatIfPropertyChange{
+						{
+							Path:               "tags.myNewTag",
+							PropertyChangeType: PropCreate,
+							AfterRaw:           []byte("\"my tag value\""),
+							Children: []*WhatIfPropertyChange{
+								{
+									Path:               "tags.myNewTag2",
+									PropertyChangeType: PropCreate,
+									AfterRaw:           []byte("\"my tag value2\""),
+									Children: []*WhatIfPropertyChange{
+										{
+											Path:               "tags.myNewTag3",
+											PropertyChangeType: PropCreate,
+											AfterRaw:           []byte("\"my tag value3\""),
+										},
+									},
+								},
+								{
+									Path:               "tags.myNewTag4",
+									PropertyChangeType: PropCreate,
+									AfterRaw:           []byte("\"my tag value4\""),
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -45,11 +72,27 @@ func TestWhatifSerialization(t *testing.T) {
 		assert.Equal(t, len(exp.Changes), len(whatIf.Changes))
 
 		for j, c := range whatIf.Changes {
-			wiBefore := c.Before()
-			wiAfter := c.After()
+			wiBefore, err := c.Before()
+			if err != nil {
+				t.Fatal(err.Error())
+			}
 
-			expBefore := exp.Changes[j].Before()
-			expAfter := exp.Changes[j].After()
+			wiAfter, err := c.After()
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+
+			expBefore, err := exp.Changes[j].Before()
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+
+			expAfter, err := exp.Changes[j].After()
+			if err != nil {
+				t.Fatal(err.Error())
+			}
+
+			assert.Equal(t, exp.Changes[j].Delta, c.Delta)
 
 			assert.Equal(t, expBefore.Get("apiVersion").Str, wiBefore.Get("apiVersion").Str)
 			assert.Equal(t, expBefore.Get("id").Str, wiBefore.Get("id").Str)

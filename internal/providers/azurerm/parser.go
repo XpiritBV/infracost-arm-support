@@ -21,6 +21,12 @@ func NewParser(ctx *config.ProjectContext) *Parser {
 	return &Parser{ctx}
 }
 
+type ParsedWhatifChange struct {
+	PartialResource     *schema.PartialResource
+	PartialPastResource *schema.PartialResource
+	Delta               []*WhatIfPropertyChange
+}
+
 // Same as providers/terraform/parser.go:createPartialResource
 func (p *Parser) createPartialResource(d *schema.ResourceData, u *schema.UsageData) *schema.PartialResource {
 	registryMap := resources.GetRegistryMap()
@@ -68,68 +74,75 @@ func (p *Parser) createPartialResource(d *schema.ResourceData, u *schema.UsageDa
 	}
 }
 
-func (p *Parser) parse(j []byte, usage usageMap) ([]*schema.PartialResource, []*schema.PartialResource, error) {
-	var resources []*schema.PartialResource
-	var pastResources []*schema.PartialResource
+func (p *Parser) parse(j []byte, usage usageMap) ([]*ParsedWhatifChange, error) {
+	var changes []*ParsedWhatifChange
 	var whatif WhatIf
 
 	err := json.Unmarshal(j, &whatif)
 	if err != nil {
-		return pastResources, resources, errors.New("Failed to unmarshal whatif operation result")
+		return nil, errors.New("Failed to unmarshal whatif operation result")
 	}
 
 	if whatif.Status != "Succeeded" {
-		return pastResources, resources, errors.New("WhatIf operation was not successful")
+		return nil, errors.New("WhatIf operation was not successful")
 	}
 
 	for _, change := range whatif.Changes {
-		before, after, err := p.parseChange(&change, usage)
+		parsed, err := p.parseChange(change, usage)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
-		if after != nil {
-			resources = append(resources, after)
-		}
-
-		if before != nil {
-			pastResources = append(pastResources, before)
+		if parsed != nil {
+			changes = append(changes, parsed)
 		}
 	}
 
-	return pastResources, resources, nil
+	// Recursively create WhatIfPropertyChanges
+
+	return changes, nil
 }
 
 // TODO: need baseresources like TF provider?
-func (p *Parser) parseChange(change *ResourceSnapshot, usage usageMap) (*schema.PartialResource, *schema.PartialResource, error) {
+func (p *Parser) parseChange(change *WhatifChange, usage usageMap) (*ParsedWhatifChange, error) {
 	var after *schema.PartialResource
 	var before *schema.PartialResource
 
-	beforeData := change.Before()
-	afterData := change.After()
+	beforeData, err := change.Before()
+	if err != nil {
+		return nil, err
+	}
+
+	afterData, err := change.After()
+	if err != nil {
+		return nil, err
+	}
 
 	if afterData.Get("id").Exists() {
 		afterRd, err := p.parseResourceData(afterData)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		after = p.createPartialResource(afterRd, afterRd.UsageData)
 	}
 
-	// Parse before snapshot only when it's present
 	if beforeData.Get("id").Exists() {
 		beforeRd, err := p.parseResourceData(beforeData)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 		before = p.createPartialResource(beforeRd, beforeRd.UsageData)
 	}
 
-	return before, after, nil
+	return &ParsedWhatifChange{
+		PartialResource:     after,
+		PartialPastResource: before,
+		Delta:               change.Delta,
+	}, nil
 }
 
 // TODO: This is not exhaustive yet, probably need to do something with 'Delta' and 'WhatIfPropertyChange'
-func (p *Parser) parseResourceData(data gjson.Result) (*schema.ResourceData, error) {
+func (p *Parser) parseResourceData(data *gjson.Result) (*schema.ResourceData, error) {
 	var resData *schema.ResourceData
 
 	armType := data.Get("type")
@@ -143,7 +156,7 @@ func (p *Parser) parseResourceData(data gjson.Result) (*schema.ResourceData, err
 		return nil, errors.New(fmt.Sprintf("Could not convert AzureRM type '%s' to TF type", armType.Str))
 	}
 
-	resData = schema.NewAzureRMResourceData(tfType, resId.Str, data)
+	resData = schema.NewAzureRMResourceData(tfType, resId.Str, *data)
 
 	return resData, nil
 }
