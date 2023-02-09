@@ -2,15 +2,51 @@
   "status": "Succeeded",
   "changes": [
     {
-      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group2",
-      "changeType": "Create",
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myExistingIdentity",
+      "changeType": "Modify",
+      "before": {
+        "apiVersion": "2018-11-30",
+        "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myExistingIdentity",
+        "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+        "name": "myExistingIdentity",
+        "location": "westus2"
+      },
       "after": {
-        "apiVersion": "2019-03-01",
-        "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group2",
-        "type": "Microsoft.Resources/resourceGroups",
-        "name": "my-resource-group2",
-        "location": "location3"
-      }
+        "apiVersion": "2018-11-30",
+        "id": "/subscriptions/00000000-0000-0000-0000-000000000001/resourceGroups/my-resource-group/providers/Microsoft.ManagedIdentity/userAssignedIdentities/myExistingIdentity",
+        "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+        "name": "myExistingIdentity",
+        "location": "westus2",
+        "tags": {
+          "myNewTag": "my tag value"
+        }
+      },
+      "delta": [
+        {
+          "path": "tags.myNewTag",
+          "propertyChangeType": "Create",
+          "after": "my tag value",
+          "children": [
+            {
+              "path": "tags.myNewTag2",
+              "propertyChangeType": "Create",
+              "after": "my tag value2",
+              "children": [
+                {
+                  "path": "tags.myNewTag3",
+                  "propertyChangeType": "Create",
+                  "after": "my tag value3"
+                }
+              ]
+            },
+            {
+              "path": "tags.myNewTag4",
+              "propertyChangeType": "Create",
+              "after": "my tag value4"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

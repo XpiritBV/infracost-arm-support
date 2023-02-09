@@ -8,7 +8,7 @@ import (
 )
 
 type ResourceRegistryMap map[string]*schema.RegistryItem
-type ArmToTfMapper func(rawResource gjson.Result) string
+type ArmToTfMapper func(rawResource *gjson.Result) string
 type ArmToTfResourceMapperMap map[string]ArmToTfMapper
 
 var (
@@ -17,7 +17,7 @@ var (
 )
 
 func defaultArmToTfMapper(tfResource string) ArmToTfMapper {
-	return func(_ gjson.Result) string {
+	return func(_ *gjson.Result) string {
 		return tfResource
 	}
 }
@@ -36,7 +36,7 @@ var azureRMToTerraformResourceMap = ArmToTfResourceMapperMap{
 
 // TODO: Terraform resources and azure resources don't map 1-on-1 to eachother
 // Use this function as a stub for later exceptions
-func GetTFResourceFromAzureRMType(armResource string, rawResource gjson.Result) string {
+func GetTFResourceFromAzureRMType(armResource string, rawResource *gjson.Result) string {
 	mapper := azureRMToTerraformResourceMap[armResource]
 	return mapper(rawResource)
 }

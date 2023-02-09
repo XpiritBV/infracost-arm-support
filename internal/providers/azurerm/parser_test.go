@@ -9,6 +9,7 @@ import (
 	"github.com/infracost/infracost/internal/config"
 	"github.com/infracost/infracost/internal/providers/azurerm/util"
 	"github.com/infracost/infracost/internal/schema"
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -70,11 +71,20 @@ func TestParseWhatifJson(t *testing.T) {
 		ctx := config.NewProjectContext(config.EmptyRunContext(), &config.Project{}, log.Fields{})
 		parser := NewParser(ctx)
 
-		pastPartials, partials, err := parser.parse(testFile, usage)
-		partials = append(partials, pastPartials...)
-
+		whatIfResources, err := parser.parse(testFile, usage)
 		if err != nil {
-			t.Fatalf("[Test %d] Failed to create partial resources"+err.Error(), i)
+			t.Fatalf(errors.Wrap(err, "Error parsing WhatIf data").Error())
+		}
+
+		var partials []*schema.PartialResource
+		for _, res := range whatIfResources {
+			if res.PartialPastResource != nil {
+				partials = append(partials, res.PartialPastResource)
+			}
+			if res.PartialResource != nil {
+				partials = append(partials, res.PartialResource)
+
+			}
 		}
 
 		actual := make([]*schema.Resource, len(partials))
