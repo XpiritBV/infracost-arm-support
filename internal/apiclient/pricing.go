@@ -4,9 +4,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net/http"
 	"os"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/infracost/infracost/internal/config"
+	"github.com/infracost/infracost/internal/logging"
 	"github.com/infracost/infracost/internal/schema"
 
 	log "github.com/sirupsen/logrus"
@@ -69,12 +72,16 @@ func NewPricingAPIClient(ctx *config.RunContext) *PricingAPIClient {
 		tlsConfig.InsecureSkipVerify = *ctx.Config.TLSInsecureSkipVerify
 	}
 
+	client := retryablehttp.NewClient()
+	client.Logger = &LeveledLogger{Logger: logging.Logger.WithField("library", "retryablehttp")}
+	client.HTTPClient.Transport.(*http.Transport).TLSClientConfig = &tlsConfig
+
 	return &PricingAPIClient{
 		APIClient: APIClient{
-			endpoint:  ctx.Config.PricingAPIEndpoint,
-			apiKey:    ctx.Config.APIKey,
-			tlsConfig: &tlsConfig,
-			uuid:      ctx.UUID(),
+			httpClient: client.StandardClient(),
+			endpoint:   ctx.Config.PricingAPIEndpoint,
+			apiKey:     ctx.Config.APIKey,
+			uuid:       ctx.UUID(),
 		},
 		Currency:       currency,
 		EventsDisabled: ctx.Config.EventsDisabled,

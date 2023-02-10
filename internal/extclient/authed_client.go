@@ -2,9 +2,12 @@ package extclient
 
 import (
 	"fmt"
-	"github.com/hashicorp/go-retryablehttp"
 	"io"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/infracost/infracost/internal/apiclient"
+	"github.com/infracost/infracost/internal/logging"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -20,6 +23,7 @@ type AuthedAPIClient struct {
 // NewAuthedAPIClient returns a new API client.
 func NewAuthedAPIClient(host, token string) *AuthedAPIClient {
 	client := retryablehttp.NewClient()
+	client.Logger = &apiclient.LeveledLogger{Logger: logging.Logger.WithField("library", "retryablehttp")}
 	client.HTTPClient.Timeout = time.Second * 30
 	return &AuthedAPIClient{
 		host:   host,
