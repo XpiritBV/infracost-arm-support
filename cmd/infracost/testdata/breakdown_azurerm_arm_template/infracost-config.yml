@@ -1,0 +1,9 @@
+version: 0.1
+
+projects:
+  - path: "testdata/breakdown_azurerm_arm_template/azuredeploy.json"
+    name: "azuredeploy-arm"
+    arm_deployment_scope: "resourceGroup"
+    arm_deployment_mode: "incremental"
+    arm_location: "westeurope"
+    arm_resource_group: "rg-infracost-test"

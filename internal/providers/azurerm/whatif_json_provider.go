@@ -10,33 +10,43 @@ import (
 )
 
 // TODO: AzureRM doesn't have a concept of a 'Project', needs its own config.ProjectContext object
-type WhatifJsonProvider struct {
+type AzureRMWhatifProvider struct {
 	ctx                  *config.ProjectContext
 	Path                 string
 	includePastResources bool
+	content              []byte
 }
 
-func NewWhatifJsonProvider(ctx *config.ProjectContext, includePastResources bool) schema.Provider {
-	return &WhatifJsonProvider{
+func NewWhatifJsonProvider(ctx *config.ProjectContext, includePastResources bool) *AzureRMWhatifProvider {
+	return &AzureRMWhatifProvider{
 		ctx:                  ctx,
 		Path:                 ctx.ProjectConfig.Path,
 		includePastResources: includePastResources,
 	}
 }
 
-func (p *WhatifJsonProvider) Type() string {
+func newWhatifJsonProviderWithContent(ctx *config.ProjectContext, content []byte, includePastResources bool) *AzureRMWhatifProvider {
+	return &AzureRMWhatifProvider{
+		ctx:                  ctx,
+		Path:                 ctx.ProjectConfig.Path,
+		includePastResources: includePastResources,
+		content:              content,
+	}
+}
+
+func (p *AzureRMWhatifProvider) Type() string {
 	return "azurerm_whatif_json"
 }
 
-func (p *WhatifJsonProvider) DisplayType() string {
+func (p *AzureRMWhatifProvider) DisplayType() string {
 	return "Azure Resource Manager WhatIf JSON"
 }
 
-func (p *WhatifJsonProvider) AddMetadata(metadata *schema.ProjectMetadata) {
+func (p *AzureRMWhatifProvider) AddMetadata(metadata *schema.ProjectMetadata) {
 	// no op
 }
 
-func (p *WhatifJsonProvider) LoadResources(usage map[string]*schema.UsageData) ([]*schema.Project, error) {
+func (p *AzureRMWhatifProvider) LoadResources(usage map[string]*schema.UsageData) ([]*schema.Project, error) {
 	spinner := ui.NewSpinner("Extracting only cost-related params from WhatIf", ui.SpinnerOptions{
 		EnableLogging: p.ctx.RunContext.Config.IsLogging(),
 		NoColor:       p.ctx.RunContext.Config.NoColor,
@@ -44,9 +54,12 @@ func (p *WhatifJsonProvider) LoadResources(usage map[string]*schema.UsageData) (
 	})
 	defer spinner.Fail()
 
-	j, err := os.ReadFile(p.Path)
-	if err != nil {
-		return []*schema.Project{}, errors.Wrap(err, "Error reading WhatIf result JSON file")
+	if p.content == nil || len(p.content) == 0 {
+		j, err := os.ReadFile(p.Path)
+		if err != nil {
+			return []*schema.Project{}, errors.Wrap(err, "Error reading WhatIf result JSON file")
+		}
+		p.content = j
 	}
 
 	metadata := config.DetectProjectMetadata(p.ctx.ProjectConfig.Path)
@@ -66,7 +79,7 @@ func (p *WhatifJsonProvider) LoadResources(usage map[string]*schema.UsageData) (
 	parser := NewParser(p.ctx)
 
 	// TODO: pastResources are ??, check what they are in Azure context
-	whatIfResources, err := parser.parse(j, usage)
+	whatIfResources, err := parser.parse(p.content, usage)
 	if err != nil {
 		return []*schema.Project{}, errors.Wrap(err, "Error parsing WhatIf data")
 	}

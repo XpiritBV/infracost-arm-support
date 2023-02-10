@@ -2,8 +2,8 @@ package azurerm
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
+	"os"
 	"path"
 	"testing"
 
@@ -62,7 +62,7 @@ func TestWhatifSerialization(t *testing.T) {
 		var whatIf WhatIf
 		filePath := path.Join(testDataPath, f)
 
-		file, err := ioutil.ReadFile(filePath)
+		file, err := os.ReadFile(filePath)
 		if err != nil {
 			log.Fatalf("Failed to read test json file")
 		}

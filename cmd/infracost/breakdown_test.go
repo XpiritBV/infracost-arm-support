@@ -639,7 +639,6 @@ func TestBreakdownMultiProjectWithAllErrors(t *testing.T) {
 	)
 }
 
-// cmd/infracost/run.go:runProjectConfig calls everything
 func TestBreakdownAzurermWhatifJson(t *testing.T) {
 	testName := testutil.CalcGoldenFileTestdataDirName()
 	testFile := path.Join("./testdata", testName, "what_if.json")
@@ -650,6 +649,36 @@ func TestBreakdownAzurermWhatifJson(t *testing.T) {
 		[]string{"breakdown",
 			"--path",
 			testFile,
+			"--show-skipped",
+		}, &GoldenFileOptions{CaptureLogs: true},
+	)
+}
+
+func TestBreakdownAzurermArmTemplate(t *testing.T) {
+	testName := testutil.CalcGoldenFileTestdataDirName()
+	configFile := path.Join("./testdata", testName, "infracost-config.yml")
+
+	GoldenFileCommandTest(
+		t,
+		testName,
+		[]string{"breakdown",
+			"--config-file",
+			configFile,
+			"--show-skipped",
+		}, &GoldenFileOptions{CaptureLogs: true},
+	)
+}
+
+func TestBreakdownAzurermBicepTemplate(t *testing.T) {
+	testName := testutil.CalcGoldenFileTestdataDirName()
+	configFile := path.Join("./testdata", testName, "infracost-config.yml")
+
+	GoldenFileCommandTest(
+		t,
+		testName,
+		[]string{"breakdown",
+			"--config-file",
+			configFile,
 			"--show-skipped",
 		}, &GoldenFileOptions{CaptureLogs: true},
 	)

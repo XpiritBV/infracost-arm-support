@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sync"
 
 	"github.com/awslabs/goformation/v4"
+	"github.com/tidwall/gjson"
 
 	"github.com/infracost/infracost/internal/config"
 	"github.com/infracost/infracost/internal/hcl"
@@ -91,6 +93,12 @@ func Detect(ctx *config.ProjectContext, includePastResources bool) (schema.Provi
 		return cloudformation.NewTemplateProvider(ctx, includePastResources), nil
 	case "azurerm_whatif_json":
 		return azurerm.NewWhatifJsonProvider(ctx, includePastResources), nil
+	case "azurerm_template_json":
+		provider, err := azurerm.NewArmTemplateProvider(ctx, includePastResources)
+		if err != nil {
+			return nil, err
+		}
+		return provider, nil
 	}
 
 	return nil, fmt.Errorf("could not detect path type for '%s'", path)
@@ -144,6 +152,10 @@ func DetectProjectType(path string, forceCLI bool) string {
 
 	if isAzureRMWhatifTemplate(path) {
 		return "azurerm_whatif_json"
+	}
+
+	if isAzureRMTemplate(path) || isBicepTemplate(path) {
+		return "azurerm_template_json"
 	}
 
 	if forceCLI {
@@ -207,10 +219,44 @@ func isAzureRMWhatifTemplate(path string) bool {
 		return false
 	}
 
-	var jsonFormat azurerm.WhatIf
-	err = json.Unmarshal(b, &jsonFormat)
+	var jsonFormat struct {
+		Changes []interface{} `json:"changes"`
+		Status  string        `json:"status"`
+	}
 
-	return err == nil
+	err = json.Unmarshal(b, &jsonFormat)
+	if err != nil {
+		return false
+	}
+
+	valid := jsonFormat.Changes != nil && jsonFormat.Status != ""
+
+	return valid
+}
+
+func isBicepTemplate(path string) bool {
+	return filepath.Ext(path) == ".bicep"
+}
+
+func isAzureRMTemplate(path string) bool {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+
+	parsed := gjson.ParseBytes(b)
+	schema := parsed.Get("$schema")
+	if !schema.Exists() {
+		return false
+	}
+
+	pattern := "https://schema\\.management\\.azure\\.com/schemas/\\d{4}-\\d{2}-\\d{2}/deploymentTemplate\\.json"
+	matched, err := regexp.Match(pattern, []byte(schema.Str))
+	if err != nil {
+		return false
+	}
+
+	return matched
 }
 
 func isTerraformPlan(path string) bool {
