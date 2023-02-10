@@ -1,0 +1,19 @@
+version: 0.1
+
+projects:
+  - path: "examples/azurerm/web_app/what_if.json"
+    name: "azurerm-whatif"
+
+  - path: "examples/azurerm/web_app/arm/azuredeploy.json"
+    name: "azurerm-arm"
+    arm_deployment_scope: "resourceGroup"
+    arm_deployment_mode: "incremental"
+    arm_location: "westeurope"
+    arm_resource_group: "rg-infracost-test"
+  
+  - path: "examples/azurerm/web_app/bicep/main.bicep"
+    name: "azurerm-bicep"
+    arm_deployment_scope: "resourceGroup"
+    arm_deployment_mode: "incremental"
+    arm_location: "westeurope"
+    arm_resource_group: "rg-infracost-test"

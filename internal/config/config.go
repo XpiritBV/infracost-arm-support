@@ -54,11 +54,27 @@ type Project struct {
 	TerraformCloudToken string `yaml:"terraform_cloud_token,omitempty" envconfig:"TERRAFORM_CLOUD_TOKEN"`
 	// TerragruntFlags set additional flags that should be passed to terragrunt.
 	TerragruntFlags string `envconfig:"TERRAGRUNT_FLAGS"`
+	// TerraformUseState sets if the users wants to use the terraform state for infracost ops.
+	TerraformUseState bool `yaml:"terraform_use_state,omitempty" ignored:"true"`
 	// UsageFile is the full path to usage file that specifies values for usage-based resources
 	UsageFile string `yaml:"usage_file,omitempty" ignored:"true"`
-	// TerraformUseState sets if the users wants to use the terraform state for infracost ops.
-	TerraformUseState bool              `yaml:"terraform_use_state,omitempty" ignored:"true"`
-	Env               map[string]string `yaml:"env,omitempty" ignored:"true"`
+
+	// Path to the Azure CLI binary
+	AzBinary string `yaml:"az_binary,omitempty" ignored:"true"`
+	// Target scope of the deployment. Allowed values: 'tenant','managementGroup','subscription','resourceGroup'
+	ArmDeploymentScope string `yaml:"arm_deployment_scope" ignored:"true"`
+	// Mode of the deployment. Allowed values: 'complete','incremental'
+	ArmDeploymentMode string `yaml:"arm_deployment_mode,omitempty" ignored:"true"`
+	// Path to an AzureRM JSON parameters file
+	ArmParametersPath string `yaml:"arm_parameters_file,omitempty" ignored:"true"`
+	// Azure location to use for subscription and management group scoped deployments
+	ArmLocation string `yaml:"arm_location,omitempty" ignored:"true"`
+	// Azure resource group name for resource group scoped deployments
+	ArmResourceGroup string `yaml:"arm_resource_group,omitempty" ignored:"true"`
+	// Azure management group ID for management group scoped deployments
+	ArmManagementGroupId string `yaml:"arm_management_group_id" ignored:"true"`
+
+	Env map[string]string `yaml:"env,omitempty" ignored:"true"`
 }
 
 type Config struct {

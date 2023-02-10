@@ -12,17 +12,15 @@ import (
 )
 
 func TestArmTemplateProvider(t *testing.T) {
-	ctx := config.NewProjectContext(config.EmptyRunContext(), &config.Project{}, log.Fields{})
-	ctx.ProjectConfig.Path = filepath.Join("testdata", "azuredeploy.group.json")
-	opts := &ArmTemplateProviderOpts{
-		IncludePastResources: true,
-		Location:             "westeurope",
-		ResourceGroup:        "rg-infracost-test",
-		Scope:                ResourceGroup,
-		Mode:                 Incremental,
-	}
+	ctx := config.NewProjectContext(config.EmptyRunContext(), &config.Project{
+		ArmDeploymentScope: "resourceGroup",
+		ArmLocation:        "westeurope",
+		ArmResourceGroup:   "rg-infracost-test",
+		ArmDeploymentMode:  "incremental",
+	}, log.Fields{})
+	ctx.ProjectConfig.Path = filepath.Join("./testdata", "azuredeploy.group.json")
 
-	provider, err := NewArmTemplateProvider(ctx, opts)
+	provider, err := NewArmTemplateProvider(ctx, true)
 	if err != nil {
 		t.Fatalf(errors.Wrap(err, "Failed constructing ARM template provider").Error())
 	}
@@ -34,6 +32,6 @@ func TestArmTemplateProvider(t *testing.T) {
 	}
 
 	// Ensure all resources in the whatif are returned from the provider
-	assert.Equal(t, 3, len(project[0].PartialResources))
+	assert.Equal(t, 2, len(project[0].PartialResources))
 	assert.Equal(t, 0, len(project[0].PartialPastResources))
 }

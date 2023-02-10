@@ -94,15 +94,7 @@ func Detect(ctx *config.ProjectContext, includePastResources bool) (schema.Provi
 	case "azurerm_whatif_json":
 		return azurerm.NewWhatifJsonProvider(ctx, includePastResources), nil
 	case "azurerm_template_json":
-		opts := &azurerm.ArmTemplateProviderOpts{
-			IncludePastResources: includePastResources,
-			// TODO: Figure out a way to pass these parameters, maybe some config file?
-			Scope:         azurerm.ResourceGroup,
-			Mode:          azurerm.Incremental,
-			Location:      "westeurope",
-			ResourceGroup: "rg-infracost-tests",
-		}
-		provider, err := azurerm.NewArmTemplateProvider(ctx, opts)
+		provider, err := azurerm.NewArmTemplateProvider(ctx, includePastResources)
 		if err != nil {
 			return nil, err
 		}
@@ -162,12 +154,8 @@ func DetectProjectType(path string, forceCLI bool) string {
 		return "azurerm_whatif_json"
 	}
 
-	if isAzureRMTemplate(path) {
+	if isAzureRMTemplate(path) || isBicepTemplate(path) {
 		return "azurerm_template_json"
-	}
-
-	if isBicepTemplate(path) {
-		return "azurerm_bicep_template"
 	}
 
 	if forceCLI {
@@ -247,7 +235,7 @@ func isAzureRMWhatifTemplate(path string) bool {
 }
 
 func isBicepTemplate(path string) bool {
-	panic("unimplemented")
+	return filepath.Ext(path) == ".bicep"
 }
 
 func isAzureRMTemplate(path string) bool {

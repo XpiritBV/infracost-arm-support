@@ -3,11 +3,9 @@ package azurerm
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -43,7 +41,7 @@ func Cmd(opts *CmdOptions, args ...string) ([]byte, error) {
 
 	cmd := exec.Command(exe, append(args, opts.Flags...)...)
 	log.Debugf("Running command: %s", cmd.String())
-	cmd.Dir = opts.Dir
+	// cmd.Dir = opts.Dir
 	cmd.Env = os.Environ()
 
 	// TODO: Check necessity of additional ENV variables below
@@ -78,37 +76,27 @@ func Cmd(opts *CmdOptions, args ...string) ([]byte, error) {
 	return outbuf.Bytes(), nil
 }
 
-func getArmTemplateFromBicepProject() {
-	panic("Not implemented")
-}
-
-func getWhatIfFromArmTemplate(templateFile string, opts *ArmTemplateProviderOpts) ([]byte, error) {
-	var args []string
-	var err error
-
-	switch opts.Scope {
-	case ResourceGroup:
-		args, err = getGroupDeploymentArgs(templateFile, opts)
-	default:
-		err = errors.New(fmt.Sprintf("Unsupported scope %s", opts.Scope))
-	}
-	if err != nil {
-		return nil, err
+func getGroupDeploymentArgs(templateFile string, opts *ArmDeploymentOpts) ([]string, error) {
+	if opts.ResourceGroup == "" {
+		return nil, errors.New("Invalid resource group name for resource group scoped deployment")
 	}
 
-	templateDir := filepath.Dir(templateFile)
-	cmdOpts := &CmdOptions{
-		Binary: opts.Binary,
-		Flags:  args,
-		Dir:    templateDir,
+	args := []string{
+		"deployment",
+		"group",
+		"what-if",
+		"--template-file",
+		templateFile,
+		"--resource-group",
+		opts.ResourceGroup,
+		"--no-pretty-print",
 	}
 
-	output, err := Cmd(cmdOpts)
-	if err != nil {
-		return nil, err
+	if opts.ParameterFile != "" {
+		args = append(args, "--parameters", opts.ParameterFile)
 	}
 
-	return output, nil
+	return args, nil
 }
 
 // Adapted from https://github.com/sirupsen/logrus/issues/564#issuecomment-345471558
